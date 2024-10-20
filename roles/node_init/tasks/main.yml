@@ -1,0 +1,21 @@
+---
+- name: Ensure that the folder does not exist
+  file:
+    path: "{{ user_dir }}/{{ folder }}"
+    state: absent
+
+- name: Initialize Node
+  command: "{{ daemon }} init --network {{ chain_id }} --moniker {{ moniker }}"
+  environment:
+    PATH: "{{ path }}"
+  ignore_errors: true
+
+- name: download genesis
+  get_url:
+    url: '{{ genesis }}'
+    dest: '{{ user_dir }}/{{ folder }}/config/genesis.json'
+    mode: '0644'
+    force: true
+
+
+

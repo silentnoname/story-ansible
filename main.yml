@@ -1,0 +1,21 @@
+---
+- name: Prepare
+  hosts: '{{ target }}'
+  become: true
+  gather_facts: false
+  vars_files:
+    - '{{ var_file }}'
+  roles:
+    - role: prepare
+      when: prepare | default(false) | bool
+
+- name: Main
+  hosts: '{{ target }}'
+  gather_facts: false
+  vars_files:
+    - '{{ var_file }}'
+  roles:
+    - node_install
+    - node_init
+    - node_configure
+    - node_launch

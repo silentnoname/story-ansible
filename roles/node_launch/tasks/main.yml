@@ -1,0 +1,174 @@
+---
+- name: Update peers in config.toml file
+  lineinfile:
+    path: "{{ user_dir }}/{{ folder }}/config/config.toml"
+    regexp: "^persistent_peers ="
+    line: 'persistent_peers = "{{ peers }}"'
+    state: present
+  when: peers is defined
+
+- name: Update seeds in config.toml file
+  lineinfile:
+    path: "{{ user_dir }}/{{ folder }}/config/config.toml"
+    regexp: "^seeds ="
+    line: 'seeds = "{{ seeds }}"'
+    state: present
+  when: seeds is defined
+
+- name: Create cosmovisor directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - "{{ user_dir }}/{{ folder }}/cosmovisor/genesis/bin"
+    - "{{ user_dir }}/{{ folder }}/cosmovisor/upgrades"
+
+- name: copy daemon file to cosmovisor
+  copy:
+    src: "{{ user_dir }}/go/bin/{{ daemon }}"
+    dest: "{{ user_dir }}/{{ folder }}/cosmovisor/genesis/bin"
+    remote_src: true
+    mode: "0755"
+
+- name: Create upgrade directory
+  file:
+    path: '{{ item }}'
+    state: directory
+    mode: '0755'
+  with_items:
+    - '{{ user_dir }}/{{ folder }}/cosmovisor/upgrades/{{ upgrade_folder }}/bin'
+  when: upgrade_folder is defined
+
+- name: copy binary file to cosmovisor upgrade folder
+  copy:
+    src: '{{ user_dir }}/go/bin/{{ daemon }}'
+    dest: '{{ user_dir }}/{{ folder }}/cosmovisor/upgrades/{{ upgrade_folder }}/bin'
+    remote_src: true
+    mode: '0755'
+  when: upgrade_folder is defined   
+
+- name: copy story service file
+  become: true
+  become_user: "root"
+  template:
+    src: "cosmovisor.service.j2"
+    dest: "/etc/systemd/system/story.service"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: copy story geth service file
+  become: true
+  become_user: "root"
+  template:
+    src: "story-geth.service.j2"
+    dest: "/etc/systemd/system/story-geth.service"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Download story snapshot to home folder
+  get_url:
+    url: "{{ story_snapshot_url }}"
+    dest: "{{ user_dir }}/story—latest-snapshot.tar.lz4"
+    mode: "0644"
+  when: story_snapshot_url is defined and story_snapshot_url != '' and type != "archive"
+
+- name: Download archive snapshot to home folder
+  get_url:
+    url: "{{ story_archive_snapshot_url }}"
+    dest: "{{ user_dir }}/story—latest-snapshot.tar.lz4"
+    mode: "0644"
+  when: story_archive_snapshot_url is defined and story_archive_snapshot_url != '' and type == "archive"
+
+- name: Download story geth snapshot to home folder
+  get_url:
+    url: "{{ story_geth_snapshot_url }}"
+    dest: "{{ user_dir }}/story-geth—latest-snapshot.tar.lz4"
+    mode: "0644"
+  when: story_geth_snapshot_url is defined and story_geth_snapshot_url != '' and type != "archive"
+
+- name: Ensure story-geth data folder exist
+  file:
+    path: "{{ user_dir }}/.story/geth/{{ chain_id }}/geth"
+    state: directory
+    mode: '0755'
+  when: story_geth_snapshot_url is defined and story_geth_snapshot_url != ''
+
+- name: Decompression story snapshot
+  shell: "lz4 -c -d $HOME/story—latest-snapshot.tar.lz4 | tar -x -C $HOME/{{ folder }}"
+  when: >
+    (story_snapshot_url is defined and story_snapshot_url != '' and type != "archive") or
+    (story_archive_snapshot_url is defined and story_archive_snapshot_url != '' and type == "archive")
+
+- name: Decompression story geth snapshot
+  shell: "lz4 -c -d $HOME/story-geth—latest-snapshot.tar.lz4 | tar -x -C $HOME/.story/geth/{{ chain_id }}/geth"
+  when: >
+    (story_geth_snapshot_url is defined and story_geth_snapshot_url != '')
+
+
+- name: delete snapshot
+  file:
+    path: "{{ user_dir }}/story—latest-snapshot.tar.lz4"
+    state: absent
+  when: >  
+    (story_snapshot_url is defined and story_snapshot_url != '' and type != "archive") or
+    (story_archive_snapshot_url is defined and story_archive_snapshot_url != '' and type == "archive")
+
+- name: delete story geth snapshot
+  file:
+    path: "{{ user_dir }}/story-geth—latest-snapshot.tar.lz4"
+    state: absent
+  when: >  
+    story_geth_snapshot_url is defined and story_geth_snapshot_url != ''
+
+- name: Reload systemd daemon
+  become: true
+  become_user: "root"
+  systemd:
+    daemon_reload: yes
+
+- name: start story service
+  become: true
+  become_user: "root"
+  systemd:
+    name: "story"
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+- name: start story-geth service
+  become: true
+  become_user: "root"
+  systemd:
+    name: "story-geth"
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+- name: Pause for 60 seconds
+  pause:
+    seconds: 60
+
+- name: Get last 50 logs for story service
+  become: true
+  become_user: "root"
+  shell: "journalctl -u story.service -n 50 --no-pager"
+  register: cosmovisor_logs
+
+- name: Get last 50 logs for story-geth service
+  become: true
+  become_user: "root"
+  shell: "journalctl -u story-geth.service -n 50 --no-pager"
+  register: geth_logs
+
+- name: print story log
+  debug:
+    msg: "{{ cosmovisor_logs }}"
+  delegate_to: localhost  
+  
+- name: print story geth log
+  debug:
+    msg: "{{ geth_logs }}"
+  delegate_to: localhost  

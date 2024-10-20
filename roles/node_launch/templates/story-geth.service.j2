@@ -1,0 +1,13 @@
+[Unit]
+Description=Story Geth
+After=network.target
+
+[Service]
+User={{ ansible_user }}
+ExecStart={{ user_dir }}/go/bin/geth --{{ chain_id }} --syncmode full
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,56 @@
+---
+- name: Install from source
+  become: true
+  block:
+    - name: Clone story repo
+      git:
+        repo: 'https://github.com/piplabs/story.git'
+        dest: '{{ user_dir }}/story'
+        version: '{{ story_version }}'
+        update: yes
+        force: yes
+        recursive: no
+    - name: Clone story-geth repo
+      git:
+        repo: 'https://github.com/piplabs/story-geth'
+        dest: '{{ user_dir }}/story-geth'
+        version: '{{ story_geth_version }}'
+        update: yes
+        force: yes
+        recursive: no    
+
+    - name: Build story
+      command: '{{ item }}'
+      args:
+        chdir: '{{ user_dir }}/story'
+      with_items:
+        - 'go build -o story ./client'
+      environment:
+        PATH: '{{ path }}'
+        GOPATH: '{{ user_dir }}/go'
+    - name: Build story-geth
+      command: '{{ item }}'
+      args:
+        chdir: '{{ user_dir }}/story-geth'
+      with_items:
+        - 'make geth'
+      environment:
+        PATH: '{{ path }}'
+        GOPATH: '{{ user_dir }}/go'    
+    - name: Create go/bin directory
+      file:
+          path: "{{ user_dir }}/go/bin"
+          state: directory
+          mode: '0755'
+
+    - name: Move story binary to go/bin
+      command: mv build/bin/geth "{{ user_dir }}/go/bin/"
+      args:
+        chdir: "{{ user_dir }}/story-geth"
+
+    - name: Move story geth to go/bin
+      command: mv story "{{ user_dir }}/go/bin/"
+      args:
+        chdir: "{{ user_dir }}/story"
+
+

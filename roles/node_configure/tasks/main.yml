@@ -1,0 +1,63 @@
+---
+- name: Adjust config.toml port
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/config.toml'
+    regexp: '{{ item.key }}'
+    line: '{{ item.value }}'
+  loop: '{{ config_port_changes | dict2items }}'
+
+- name: Adjust story.toml ports
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/story.toml'
+    regexp: '{{ item.key }}'
+    line: '{{ item.value }}'
+    backrefs: yes
+  loop: '{{ app_port_changes | dict2items }}'
+
+- name: Adjust pruning setting for archive
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/story.toml'
+    regexp: '{{ item.key }}'
+    line: '{{ item.value }}'
+  loop: '{{ pruning_archive | dict2items }}'
+  when: type is defined and type == 'archive'
+
+
+- name: Adjust indexer setting
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/config.toml'
+    regexp: 'indexer = "'
+    line: 'indexer = "kv"'
+    state: present
+
+- name: Enable API 
+  replace:
+    path: '{{ user_dir }}/{{ folder }}/config/story.toml'
+    regexp: "api-enable = false"
+    replace: "api-enable = true"
+  when: endpoint == 'enabled'
+
+
+- name: Enable CORS 
+  replace:
+    path: '{{ user_dir }}/{{ folder }}/config/story.toml'
+    regexp: "enabled-unsafe-cors = false"
+    replace: "enabled-unsafe-cors = true"
+  when: endpoint == 'enabled'
+
+- name: Enable prometheus on the config.toml file
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/config.toml'
+    regexp: '^prometheus ='
+    line: 'prometheus = true'
+    state: present
+  when: promethues == 'true'
+    
+- name: Set engine-jwt-file in the config.toml file
+  lineinfile:
+    path: '{{ user_dir }}/{{ folder }}/config/config.toml'
+    regexp: '^engine-jwt-file ='
+    line: 'engine-jwt-file ={{ user_dir }}/.story/geth/{{ chain_id }}/geth/jwtsecret'
+    state: present
+  when: promethues == 'true'
+    
