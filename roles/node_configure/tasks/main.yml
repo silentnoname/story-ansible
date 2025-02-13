@@ -33,8 +33,15 @@
 - name: Enable API 
   replace:
     path: '{{ user_dir }}/{{ folder }}/config/story.toml'
-    regexp: "api-enable = false"
-    replace: "api-enable = true"
+    regexp: "enable = false"
+    replace: "enable = true"
+  when: endpoint == 'enabled'
+
+- name: Enable GRPC 
+  replace:
+    path: '{{ user_dir }}/{{ folder }}/config/story.toml'
+    regexp: 'grpc_laddr = ""'
+    replace: 'grpc_laddr = "0.0.0.0:{{ custom_port_prefix }}90"'
   when: endpoint == 'enabled'
 
 
