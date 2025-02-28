@@ -2,7 +2,7 @@ network: story
 folder: '.story/story'
 daemon: story
 chain_id: 'story'
-story_version: 'v1.1.0'
+story_version: 'v1.1.1'
 story_geth_version: 'v1.0.2'
 genesis: 'https://snapshot.silentvalidator.com/story/genesis/genesis.json'
 #seeds: '' #optional
