@@ -15,18 +15,26 @@ This project uses Ansible to automate the deployment of [Story](https://www.stor
 
 3. Adjust variables in `group_vars/all.yml` as needed
 
-4. Run the following command to deploy the node:
+4. Run the following command to deploy the mainnet node:
 
 ```
 ansible-playbook main.yml -e "target=story story_geth_snapshot_url=<your story geth snapshot> story_snapshot_url=<your story snapshot>"
 ```
 
-if archive node
+if archive mainnet node
 
 ```
 ansible-playbook main.yml -e "target=story story_archive_snapshot_url=<your story archive snapshot> story_geth_snapshot_url=<your story geth snapshot>"
 ```
 
+## Deploy testnet node
+
+```bash
+ansible-playbook main.yml -e "target=aeneid story_geth_snapshot_url=<your story geth snapshot> story_snapshot_url=<your story snapshot>"
+```
+
+
+Note: In inventory.ini, story nodes use `var_file="group_vars/mainnet.yml"` configuration, while aeneid testnet nodes use `var_file="group_vars/testnet.yml"` configuration.
 
 ## Key Files
 
@@ -47,9 +55,8 @@ ansible-playbook main.yml -e "target=story story_archive_snapshot_url=<your stor
 
 - Ensure all necessary variables are correctly configured before running the playbook
 - To customize ports, modify `custom_port_prefix` in `group_vars/all.yml`
-  - Default P2P port: 29256 (or `{{ custom_port_prefix }}56` if customized)
-  - Default RPC port: 29257 (or `{{ custom_port_prefix }}57` if customized)
-  - Default API port: 29217 (or `{{ custom_port_prefix }}17` if customized)
+  - Default P2P port: 29356 (or `{{ custom_port_prefix }}56` if customized)
+  - Default RPC port: 29357 (or `{{ custom_port_prefix }}57` if customized)
 - For archive nodes, set `type=archive`, for default pruning, set `type=default` in inventory.ini
 - For open endpoints to public, set `endpoint=enabled`, else set `endpoint=false` in inventory.ini
 

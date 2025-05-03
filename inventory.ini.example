@@ -1,14 +1,18 @@
 [story]
-story_1 ansible_host=10.0.0.1  prepare=true endpoint=enabled type=default
-story_2 ansible_host=10.0.0.2  prepare=false endpoint=disabled type=archive
+story_1 ansible_host=10.0.0.1 prepare=true endpoint=enabled type=default var_file="group_vars/mainnet.yml"
+story_2 ansible_host=10.0.0.2 prepare=false endpoint=disabled type=archive var_file="group_vars/mainnet.yml"
 
+[aeneid]
+aeneid_1 ansible_host=10.0.0.3 prepare=true endpoint=enabled type=default var_file="group_vars/testnet.yml"
+aeneid_2 ansible_host=10.0.0.4 prepare=false endpoint=disabled type=archive var_file="group_vars/testnet.yml"
 
 
 [all:vars]
 ansible_user=ubuntu
 ansible_port=22
 ansible_ssh_private_key_file="~/.ssh/id_rsa"
-var_file="group_vars/all.yml"
+# Default variable file (can be overridden by host-specific var_file)
+var_file="group_vars/mainnet.yml"
 user_dir="/home/{{ ansible_user }}"
 path="/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:{{ user_dir }}/go/bin"
 moniker="node"

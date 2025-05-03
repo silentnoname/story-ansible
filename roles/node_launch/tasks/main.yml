@@ -53,7 +53,7 @@
   become_user: "root"
   template:
     src: "cosmovisor.service.j2"
-    dest: "/etc/systemd/system/story.service"
+    dest: "/etc/systemd/system/{{ network }}.service"
     owner: root
     group: root
     mode: "0644"
@@ -63,7 +63,7 @@
   become_user: "root"
   template:
     src: "story-geth.service.j2"
-    dest: "/etc/systemd/system/story-geth.service"
+    dest: "/etc/systemd/system/{{ network }}-geth.service"
     owner: root
     group: root
     mode: "0644"
@@ -133,7 +133,7 @@
   become: true
   become_user: "root"
   systemd:
-    name: "story"
+    name: "{{ network }}"
     state: restarted
     daemon_reload: yes
     enabled: yes
@@ -142,7 +142,7 @@
   become: true
   become_user: "root"
   systemd:
-    name: "story-geth"
+    name: "{{ network }}-geth"
     state: restarted
     daemon_reload: yes
     enabled: yes
@@ -154,13 +154,13 @@
 - name: Get last 50 logs for story service
   become: true
   become_user: "root"
-  shell: "journalctl -u story.service -n 50 --no-pager"
+  shell: "journalctl -u {{ network }}.service -n 50 --no-pager"
   register: cosmovisor_logs
 
 - name: Get last 50 logs for story-geth service
   become: true
   become_user: "root"
-  shell: "journalctl -u story-geth.service -n 50 --no-pager"
+  shell: "journalctl -u {{ network }}-geth.service -n 50 --no-pager"
   register: geth_logs
 
 - name: print story log
